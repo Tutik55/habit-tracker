@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import { pool } from "./db.js";
 
 const app = express();
 
@@ -12,19 +13,21 @@ app.get("/", (req, res) => {
   });
 });
 
-app.get("/api/habits", (req, res) => {
-  res.json([
-    {
-      id: 1,
-      name: "Read 20 minutes",
-      completed: false
-    },
-    {
-      id: 2,
-      name: "Workout",
-      completed: true
-    }
-  ]);
+app.get("/api/habits", async (req, res) => {
+  const result = await pool.query(
+    "SELECT * FROM habits ORDER BY id"
+  );
+
+  res.json(result.rows);
+});
+
+app.get("/api/db-test", async (req, res) => {
+  const result = await pool.query("SELECT NOW()");
+
+  res.json({
+    connected: true,
+    time: result.rows[0].now,
+  });
 });
 
 app.listen(3000, () => {
