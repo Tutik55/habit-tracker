@@ -149,6 +149,117 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
+app.post("/api/habits", authenticateToken, async (req, res) => {
+  try {
+    const userId = res.locals.userId;
+    const { name, description } = req.body;
+
+    if (!name) {
+      return res.status(400).json({
+        message: "Habit name is required."
+      });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO habits (user_id, name, description)
+       VALUES ($1, $2, $3)
+       RETURNING id, user_id, name, description, archived, created_at`,
+      [userId, name, description || null]
+    );
+
+    return res.status(201).json(result.rows[0]);
+
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Internal server error."
+    });
+  }
+});
+
+
+app.patch("/api/habits/:id", authenticateToken, async (req, res) => {
+  try {
+    const userId = res.locals.userId;
+    const habitId = Number(req.params.id);
+    const { name, description, archived } = req.body;
+
+    if (Number.isNaN(habitId)) {
+      return res.status(400).json({
+        message: "Invalid habit id."
+      });
+    }
+
+    const result = await pool.query(
+      `UPDATE habits
+       SET
+         name = COALESCE($1, name),
+         description = COALESCE($2, description),
+         archived = COALESCE($3, archived)
+       WHERE id = $4 AND user_id = $5
+       RETURNING id, user_id, name, description, archived, created_at`,
+      [name, description, archived, habitId, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        message: "Habit not found."
+      });
+    }
+
+    return res.status(200).json(result.rows[0]);
+
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Internal server error."
+    });
+  }
+});
+
+app.delete("/api/habits/:id", authenticateToken, async (req, res) => {
+  try {
+    const userId = res.locals.userId;
+    const habitId = Number(req.params.id);
+
+    if (Number.isNaN(habitId)) {
+      return res.status(400).json({
+        message: "Invalid habit id."
+      });
+    }
+
+    const result = await pool.query(
+      `DELETE FROM habits
+       WHERE id = $1 AND user_id = $2
+       RETURNING id`,
+      [habitId, userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        message: "Habit not found."
+      });
+    }
+
+    return res.status(200).json({
+      message: "Habit deleted successfully."
+    });
+
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Internal server error."
+    });
+  }
+});
+
+
+
+
+
 app.listen(3000, () => {
   console.log("Server radi na http://localhost:3000");
 });
