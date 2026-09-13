@@ -91,6 +91,96 @@ export default function Dashboard() {
     }
   }
 
+  async function handleDeleteHabit(habitId: number) {
+    const token = localStorage.getItem("token");
+
+    if (!token) {
+      setMessage("You are not logged in.");
+      return;
+    }
+
+    try {
+      const response = await fetch(`http://localhost:3000/api/habits/${habitId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+        const data = await response.json();
+      
+      if (!response.ok) {
+        
+        setMessage(data.message || "Could not delete habit.");
+        return;
+      }
+
+      setHabits((currentHabits) => currentHabits.filter((habit) => habit.id !== habitId));
+      setMessage("");
+    } catch (error) {
+      console.error(error);
+      setMessage("Could not connect to server.");
+    }
+  }
+
+async function handleEditHabit(habit: Habit){
+    const newName = window.prompt("New habit name:", habit.name);
+
+  if (newName === null || newName.trim() === "") {
+    return;
+  }
+
+  const newDescription = window.prompt(
+    "New description:",
+    habit.description ?? ""
+  );
+
+  if (newDescription === null) {
+    return;
+  }
+
+  const token = localStorage.getItem("token");
+
+  if (!token) {
+    setMessage("You are not logged in.");
+    return;
+  }
+
+  try {
+    const response = await fetch(
+      `http://localhost:3000/api/habits/${habit.id}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: newName,
+          description: newDescription,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      setMessage(data.message || "Could not update habit.");
+      return;
+    }
+
+    setHabits((currentHabits) =>
+      currentHabits.map((currentHabit) =>
+        currentHabit.id === habit.id ? data : currentHabit
+      )
+    );
+
+    setMessage("");
+  } catch (error) {
+    console.error(error);
+    setMessage("Could not connect to server.");
+  }
+}
+
   return (
     <div>
       <h1>My Habits</h1>
@@ -121,6 +211,14 @@ export default function Dashboard() {
         <div key={habit.id}>
           <h2>{habit.name}</h2>
           <p>{habit.description}</p>
+
+          <button onClick={() => handleEditHabit(habit)}>
+            Edit
+          </button>
+
+          <button onClick={() => handleDeleteHabit(habit.id)}>
+            Delete
+            </button>
         </div>
       ))}
     </div>
