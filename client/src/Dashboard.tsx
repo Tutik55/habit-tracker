@@ -1,4 +1,7 @@
 import { useEffect, useState } from "react";
+import HabitSchedule from "./HabitSchedule";
+import HabitCompletion from "./HabitCompletion";
+
 
 type Habit = {
   id: number;
@@ -219,6 +222,10 @@ async function handleEditHabit(habit: Habit){
           <button onClick={() => handleDeleteHabit(habit.id)}>
             Delete
             </button>
+
+            <HabitSchedule habitId={habit.id} />
+
+            <HabitCompletion habitId={habit.id} />
         </div>
       ))}
     </div>

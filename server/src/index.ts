@@ -457,10 +457,14 @@ app.get(
       }
 
       const result = await pool.query(
-        `SELECT id, habit_id, completed_date, created_at
-         FROM habit_completions
-         WHERE habit_id = $1
-         ORDER BY completed_date DESC`,
+       `SELECT
+     id,
+     habit_id,
+     TO_CHAR(completed_date, 'YYYY-MM-DD') AS completed_date,
+     created_at
+   FROM habit_completions
+   WHERE habit_id = $1
+   ORDER BY completed_date DESC`,
         [habitId]
       );
 
