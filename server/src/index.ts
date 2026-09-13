@@ -257,7 +257,177 @@ app.delete("/api/habits/:id", authenticateToken, async (req, res) => {
 });
 
 
+app.put("/api/habits/:id/schedule", authenticateToken, async (req, res) => {
+  try {
+    const userId = res.locals.userId;
+    const habitId = Number(req.params.id);
+    const { days } = req.body;
 
+    if (Number.isNaN(habitId)) {
+      return res.status(400).json({
+        message: "Invalid habit id."
+      });
+    }
+
+    if (
+      !Array.isArray(days) ||
+      days.some(day => !Number.isInteger(day) || day < 1 || day > 7)
+    ) {
+      return res.status(400).json({
+        message: "Days must be an array of numbers from 1 to 7."
+      });
+    }
+
+    const habit = await pool.query(
+      "SELECT id FROM habits WHERE id = $1 AND user_id = $2",
+      [habitId, userId]
+    );
+
+    if (habit.rows.length === 0) {
+      return res.status(404).json({
+        message: "Habit not found."
+      });
+    }
+
+    await pool.query(
+      "DELETE FROM habit_schedules WHERE habit_id = $1",
+      [habitId]
+    );
+
+    for (const day of days) {
+      await pool.query(
+        `INSERT INTO habit_schedules (habit_id, day_of_week)
+         VALUES ($1, $2)`,
+        [habitId, day]
+      );
+    }
+
+    const result = await pool.query(
+      `SELECT id, habit_id, day_of_week
+       FROM habit_schedules
+       WHERE habit_id = $1
+       ORDER BY day_of_week`,
+      [habitId]
+    );
+
+    return res.status(200).json(result.rows);
+
+  } catch (error) {
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Internal server error."
+    });
+  }
+});
+
+
+app.post("/api/habits/:id/completions", authenticateToken, async (req, res) => {
+  try {
+    const userId = res.locals.userId;
+    const habitId = Number(req.params.id);
+    const { completedDate } = req.body;
+
+    if (Number.isNaN(habitId)) {
+      return res.status(400).json({
+        message: "Invalid habit id."
+      });
+    }
+
+    if (!completedDate) {
+      return res.status(400).json({
+        message: "completedDate is required."
+      });
+    }
+
+    const habit = await pool.query(
+      "SELECT id FROM habits WHERE id = $1 AND user_id = $2",
+      [habitId, userId]
+    );
+
+    if (habit.rows.length === 0) {
+      return res.status(404).json({
+        message: "Habit not found."
+      });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO habit_completions (habit_id, completed_date)
+       VALUES ($1, $2)
+       RETURNING id, habit_id, completed_date, created_at`,
+      [habitId, completedDate]
+    );
+
+    return res.status(201).json(result.rows[0]);
+
+  } catch (error: any) {
+    if (error.code === "23505") {
+      return res.status(409).json({
+        message: "Habit is already completed for this date."
+      });
+    }
+
+    console.error(error);
+
+    return res.status(500).json({
+      message: "Internal server error."
+    });
+  }
+});
+
+
+app.delete(
+  "/api/habits/:id/completions/:date",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const userId = res.locals.userId;
+      const habitId = Number(req.params.id);
+      const completedDate = req.params.date;
+
+      if (Number.isNaN(habitId)) {
+        return res.status(400).json({
+          message: "Invalid habit id."
+        });
+      }
+
+      const habit = await pool.query(
+        "SELECT id FROM habits WHERE id = $1 AND user_id = $2",
+        [habitId, userId]
+      );
+
+      if (habit.rows.length === 0) {
+        return res.status(404).json({
+          message: "Habit not found."
+        });
+      }
+
+      const result = await pool.query(
+        `DELETE FROM habit_completions
+         WHERE habit_id = $1 AND completed_date = $2
+         RETURNING id`,
+        [habitId, completedDate]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({
+          message: "Completion not found."
+        });
+      }
+
+      return res.status(200).json({
+        message: "Completion removed successfully."
+      });
+
+    } catch (error) {
+      console.error(error);
+
+      return res.status(500).json({
+        message: "Internal server error."
+      });
+    }
+  }
+);
 
 
 app.listen(3000, () => {
