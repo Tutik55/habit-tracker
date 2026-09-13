@@ -2,9 +2,10 @@ import { useState } from "react";
 
 type LoginProps = {
   onLogin: () => void;
+  onGoToRegister: () => void;
 };
 
-export default function Login({ onLogin }: LoginProps) {
+export default function Login({ onLogin, onGoToRegister }: LoginProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
@@ -56,6 +57,10 @@ export default function Login({ onLogin }: LoginProps) {
           value={email}
           onChange={(event) => setEmail(event.target.value)}
         />
+
+        <button onClick={onGoToRegister}>
+          Create account
+        </button>
 
         <input
           type="password"

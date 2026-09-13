@@ -5,10 +5,6 @@ import HabitStats from "./HabitStats";
 import HabitHistory from "./HabitHistory";
 
 
-
-
-
-
 type Habit = {
   id: number;
   user_id: number;
@@ -18,7 +14,11 @@ type Habit = {
   created_at: string;
 };
 
-export default function Dashboard() {
+type DashboardProps = {
+  onLogout: () => void;
+};
+
+export default function Dashboard({ onLogout }: DashboardProps) {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [message, setMessage] = useState("Loading...");
 
@@ -194,6 +194,15 @@ async function handleEditHabit(habit: Habit){
   return (
     <div>
       <h1>My Habits</h1>
+
+      <button
+      onClick={() => {
+        localStorage.removeItem("token");
+        onLogout();
+      }}
+    >
+      Logout
+    </button>
 
       <form onSubmit={handleCreateHabit}>
         <input
