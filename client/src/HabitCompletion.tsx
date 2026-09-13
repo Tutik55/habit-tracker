@@ -28,6 +28,10 @@ export default function HabitCompletion({
     async function loadCompletion() {
       const token = localStorage.getItem("token");
 
+      if (!token) {
+        return;
+      }
+
       const response = await fetch(
         `http://localhost:3000/api/habits/${habitId}/completions`,
         {
@@ -104,14 +108,55 @@ export default function HabitCompletion({
   }
 
   return (
-    <div>
-      <button onClick={toggleCompletion}>
-        {completed ? "Undo Today" : "Mark Done Today"}
+    <div className="border-t border-white/10 pt-6">
+      <div className="mb-4">
+        <h3 className="font-medium text-white">
+          Today
+        </h3>
+
+        <p className="mt-1 text-sm text-gray-500">
+          {today}
+        </p>
+      </div>
+
+      <button
+        onClick={toggleCompletion}
+        className={`w-full rounded-2xl border px-5 py-4 text-left transition ${
+          completed
+            ? "border-emerald-500/30 bg-emerald-500/10"
+            : "border-white/10 bg-[#101010] hover:border-blue-500/40"
+        }`}
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="font-medium text-white">
+              {completed ? "Completed today" : "Mark as completed"}
+            </p>
+
+            <p className="mt-1 text-sm text-gray-500">
+              {completed
+                ? "Great work. Keep the streak going."
+                : "Finish today's habit and mark it done."}
+            </p>
+          </div>
+
+          <div
+            className={`flex h-10 w-10 items-center justify-center rounded-full ${
+              completed
+                ? "bg-emerald-500 text-white"
+                : "bg-white/5 text-gray-500"
+            }`}
+          >
+            {completed ? "✓" : "○"}
+          </div>
+        </div>
       </button>
 
-      {completed && <span> ✅ Completed today</span>}
-
-      {message && <p>{message}</p>}
+      {message && (
+        <p className="mt-3 text-sm text-red-400">
+          {message}
+        </p>
+      )}
     </div>
   );
 }

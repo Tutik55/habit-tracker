@@ -13,7 +13,8 @@ type Completion = {
 };
 
 export default function HabitHistory({
-  habitId,refreshKey
+  habitId,
+  refreshKey,
 }: HabitHistoryProps) {
   const [completions, setCompletions] = useState<Completion[]>([]);
   const [message, setMessage] = useState("");
@@ -58,24 +59,59 @@ export default function HabitHistory({
     }
 
     loadHistory();
-  }, [habitId,refreshKey]);
+  }, [habitId, refreshKey]);
 
   return (
-    <div>
-      <h3>Completion History</h3>
+    <div className="border-t border-white/10 pt-6">
+      <div className="mb-4">
+        <h3 className="font-medium text-white">
+          Completion History
+        </h3>
 
-      {message && <p>{message}</p>}
+        <p className="mt-1 text-sm text-gray-500">
+          Recent completed days.
+        </p>
+      </div>
+
+      {message && (
+        <p className="mb-3 text-sm text-red-400">
+          {message}
+        </p>
+      )}
 
       {completions.length === 0 ? (
-        <p>No completions yet.</p>
+        <div className="rounded-2xl border border-white/10 bg-[#101010] p-5 text-sm text-gray-500">
+          No completions yet.
+        </div>
       ) : (
-        <ul>
-          {completions.map((completion) => (
-            <li key={completion.id}>
-              ✅ {completion.completed_date}
-            </li>
+        <div className="space-y-2">
+          {completions.slice(0, 7).map((completion) => (
+            <div
+              key={completion.id}
+              className="flex items-center justify-between rounded-xl border border-white/10 bg-[#101010] px-4 py-3"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-400">
+                  ✓
+                </div>
+
+                <div>
+                  <p className="text-sm font-medium text-white">
+                    Completed
+                  </p>
+
+                  <p className="text-xs text-gray-500">
+                    {completion.completed_date}
+                  </p>
+                </div>
+              </div>
+
+              <span className="text-xs text-emerald-400">
+                Done
+              </span>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );
