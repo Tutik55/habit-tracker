@@ -1,6 +1,12 @@
 import { useEffect, useState } from "react";
 import HabitSchedule from "./HabitSchedule";
 import HabitCompletion from "./HabitCompletion";
+import HabitStats from "./HabitStats";
+import HabitHistory from "./HabitHistory";
+
+
+
+
 
 
 type Habit = {
@@ -19,6 +25,7 @@ export default function Dashboard() {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
 
+  const [refreshKey, setRefreshKey] = useState(0);
   useEffect(() => {
     async function loadHabits() {
       const token = localStorage.getItem("token");
@@ -225,7 +232,19 @@ async function handleEditHabit(habit: Habit){
 
             <HabitSchedule habitId={habit.id} />
 
-            <HabitCompletion habitId={habit.id} />
+            <HabitCompletion habitId={habit.id} 
+             onChanged={() => setRefreshKey((current) => current + 1)}
+            />
+
+            <HabitStats 
+            habitId={habit.id} 
+            refreshKey={refreshKey}
+            />
+
+            <HabitHistory 
+            habitId={habit.id}
+            refreshKey={refreshKey}
+            />
         </div>
       ))}
     </div>

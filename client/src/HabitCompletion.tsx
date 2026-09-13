@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 type HabitCompletionProps = {
   habitId: number;
+  onChanged: () => void;
 };
 
 function getTodayDate() {
@@ -16,6 +17,7 @@ function getTodayDate() {
 
 export default function HabitCompletion({
   habitId,
+  onChanged,
 }: HabitCompletionProps) {
   const [completed, setCompleted] = useState(false);
   const [message, setMessage] = useState("");
@@ -98,6 +100,7 @@ export default function HabitCompletion({
 
     setCompleted(!completed);
     setMessage("");
+    onChanged();
   }
 
   return (

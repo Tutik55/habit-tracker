@@ -495,10 +495,12 @@ app.get(
 
       // 1. Pronađi habit i provjeri da pripada korisniku
       const habitResult = await pool.query(
-        `SELECT id, created_at::date AS created_date
-         FROM habits
-         WHERE id = $1 AND user_id = $2`,
-        [habitId, userId]
+        `SELECT
+     id,
+     TO_CHAR(created_at, 'YYYY-MM-DD') AS created_date
+   FROM habits
+   WHERE id = $1 AND user_id = $2`,
+  [habitId, userId]
       );
 
       if (habitResult.rows.length === 0) {
