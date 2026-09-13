@@ -430,6 +430,247 @@ app.delete(
 );
 
 
+
+app.get(
+  "/api/habits/:id/completions",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const userId = res.locals.userId;
+      const habitId = Number(req.params.id);
+
+      if (Number.isNaN(habitId)) {
+        return res.status(400).json({
+          message: "Invalid habit id."
+        });
+      }
+
+      const habit = await pool.query(
+        "SELECT id FROM habits WHERE id = $1 AND user_id = $2",
+        [habitId, userId]
+      );
+
+      if (habit.rows.length === 0) {
+        return res.status(404).json({
+          message: "Habit not found."
+        });
+      }
+
+      const result = await pool.query(
+        `SELECT id, habit_id, completed_date, created_at
+         FROM habit_completions
+         WHERE habit_id = $1
+         ORDER BY completed_date DESC`,
+        [habitId]
+      );
+
+      return res.status(200).json(result.rows);
+    } catch (error) {
+      console.error(error);
+
+      return res.status(500).json({
+        message: "Internal server error."
+      });
+    }
+  }
+);
+
+app.get(
+  "/api/habits/:id/stats",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const userId = res.locals.userId;
+      const habitId = Number(req.params.id);
+
+      if (Number.isNaN(habitId)) {
+        return res.status(400).json({
+          message: "Invalid habit id."
+        });
+      }
+
+      // 1. Pronađi habit i provjeri da pripada korisniku
+      const habitResult = await pool.query(
+        `SELECT id, created_at::date AS created_date
+         FROM habits
+         WHERE id = $1 AND user_id = $2`,
+        [habitId, userId]
+      );
+
+      if (habitResult.rows.length === 0) {
+        return res.status(404).json({
+          message: "Habit not found."
+        });
+      }
+
+      // 2. Učitaj dane kada se habit treba raditi
+      const scheduleResult = await pool.query(
+        `SELECT day_of_week
+         FROM habit_schedules
+         WHERE habit_id = $1
+         ORDER BY day_of_week`,
+        [habitId]
+      );
+
+      const scheduleDays = new Set<number>(
+        scheduleResult.rows.map(row => row.day_of_week)
+      );
+
+      // 3. Učitaj sve completions
+      const completionResult = await pool.query(
+        `SELECT TO_CHAR(completed_date, 'YYYY-MM-DD') AS completed_date
+         FROM habit_completions
+         WHERE habit_id = $1`,
+        [habitId]
+      );
+
+      const completedDates = new Set<string>(
+        completionResult.rows.map(row => row.completed_date)
+      );
+
+      const createdDate = habitResult.rows[0].created_date;
+      const start = new Date(`${createdDate}T00:00:00Z`);
+
+      const now = new Date();
+
+      const today = new Date(
+        Date.UTC(
+          now.getUTCFullYear(),
+          now.getUTCMonth(),
+          now.getUTCDate()
+        )
+      );
+
+      const scheduledDates: string[] = [];
+
+      // 4. Pronađi sve planirane dane od nastanka habita do danas
+      for (
+        let date = new Date(start);
+        date <= today;
+        date.setUTCDate(date.getUTCDate() + 1)
+      ) {
+        const jsDay = date.getUTCDay();
+
+        // JS: Sunday = 0
+        // Naša baza: Monday = 1 ... Sunday = 7
+        const dayOfWeek = jsDay === 0 ? 7 : jsDay;
+
+        if (scheduleDays.has(dayOfWeek)) {
+          scheduledDates.push(date.toISOString().slice(0, 10));
+        }
+      }
+
+      // 5. Success percentage
+      const completedScheduledDays = scheduledDates.filter(date =>
+        completedDates.has(date)
+      );
+
+      const successPercentage =
+        scheduledDates.length === 0
+          ? 0
+          : Math.round(
+              (completedScheduledDays.length / scheduledDates.length) * 100
+            );
+
+      // 6. Best streak
+      let current = 0;
+      let bestStreak = 0;
+
+      for (const date of scheduledDates) {
+        if (completedDates.has(date)) {
+          current++;
+          bestStreak = Math.max(bestStreak, current);
+        } else {
+          current = 0;
+        }
+      }
+
+      // 7. Current streak
+     let currentStreak = 0;
+
+for (let i = scheduledDates.length - 1; i >= 0; i--) {
+  const date = scheduledDates[i];
+
+  if (!date) {
+    break;
+  }
+
+  if (completedDates.has(date)) {
+    currentStreak++;
+  } else {
+    break;
+  }
+}
+
+      return res.status(200).json({
+        habitId,
+        currentStreak,
+        bestStreak,
+        successPercentage,
+        completedScheduledDays: completedScheduledDays.length,
+        totalScheduledDays: scheduledDates.length
+      });
+
+    } catch (error) {
+      console.error(error);
+
+      return res.status(500).json({
+        message: "Internal server error."
+      });
+    }
+  }
+);
+
+
+app.get(
+  "/api/habits/:id/schedule",
+  authenticateToken,
+  async (req, res) => {
+    try {
+      const userId = res.locals.userId;
+      const habitId = Number(req.params.id);
+
+      if (Number.isNaN(habitId)) {
+        return res.status(400).json({
+          message: "Invalid habit id."
+        });
+      }
+
+      const habit = await pool.query(
+        "SELECT id FROM habits WHERE id = $1 AND user_id = $2",
+        [habitId, userId]
+      );
+
+      if (habit.rows.length === 0) {
+        return res.status(404).json({
+          message: "Habit not found."
+        });
+      }
+
+      const result = await pool.query(
+        `SELECT day_of_week
+         FROM habit_schedules
+         WHERE habit_id = $1
+         ORDER BY day_of_week`,
+        [habitId]
+      );
+
+      return res.status(200).json({
+        habitId,
+        days: result.rows.map(row => row.day_of_week)
+      });
+
+    } catch (error) {
+      console.error(error);
+
+      return res.status(500).json({
+        message: "Internal server error."
+      });
+    }
+  }
+);
+
+
 app.listen(3000, () => {
   console.log("Server radi na http://localhost:3000");
 });
