@@ -32,6 +32,11 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [selectedHabitId, setSelectedHabitId] = useState<number | null>(null);
 
   const [showCreateHabit, setShowCreateHabit] = useState(false);
+
+  const [showEditHabit, setShowEditHabit] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDescription, setEditDescription] = useState("");
+
 const selectedHabit =
   habits.find((habit) => habit.id === selectedHabitId) ??
   habits[0] ??
@@ -155,7 +160,15 @@ setMessage("");
         return;
       }
 
-      setHabits((currentHabits) => currentHabits.filter((habit) => habit.id !== habitId));
+      const remainingHabits = habits.filter(
+  (habit) => habit.id !== habitId
+);
+
+setHabits(remainingHabits);
+
+if (selectedHabitId === habitId) {
+  setSelectedHabitId(remainingHabits[0]?.id ?? null);
+}
       setMessage("");
     } catch (error) {
       console.error(error);
@@ -163,19 +176,15 @@ setMessage("");
     }
   }
 
-async function handleEditHabit(habit: Habit){
-    const newName = window.prompt("New habit name:", habit.name);
+async function handleEditHabit(event: React.FormEvent) {
+  event.preventDefault();
 
-  if (newName === null || newName.trim() === "") {
+  if (!selectedHabit) {
     return;
   }
 
-  const newDescription = window.prompt(
-    "New description:",
-    habit.description ?? ""
-  );
-
-  if (newDescription === null) {
+  if (editName.trim() === "") {
+    setMessage("Habit name is required.");
     return;
   }
 
@@ -188,7 +197,7 @@ async function handleEditHabit(habit: Habit){
 
   try {
     const response = await fetch(
-      `http://localhost:3000/api/habits/${habit.id}`,
+      `http://localhost:3000/api/habits/${selectedHabit.id}`,
       {
         method: "PATCH",
         headers: {
@@ -196,13 +205,19 @@ async function handleEditHabit(habit: Habit){
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          name: newName,
-          description: newDescription,
+          name: editName,
+          description: editDescription,
         }),
       }
     );
 
     const data = await response.json();
+
+    if (response.status === 401) {
+      localStorage.removeItem("token");
+      onLogout();
+      return;
+    }
 
     if (!response.ok) {
       setMessage(data.message || "Could not update habit.");
@@ -210,19 +225,18 @@ async function handleEditHabit(habit: Habit){
     }
 
     setHabits((currentHabits) =>
-      currentHabits.map((currentHabit) =>
-        currentHabit.id === habit.id ? data : currentHabit
+      currentHabits.map((habit) =>
+        habit.id === selectedHabit.id ? data : habit
       )
     );
 
+    setShowEditHabit(false);
     setMessage("");
   } catch (error) {
     console.error(error);
     setMessage("Could not connect to server.");
   }
 }
-
-
 
      return (
   <div className="min-h-screen bg-[#0f0f0f] text-white">
@@ -360,6 +374,69 @@ async function handleEditHabit(habit: Habit){
   </div>
 )}
 
+{/* Edit habit */}
+{showEditHabit && selectedHabit && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+    <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#171717] p-6 shadow-2xl">
+
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-white">
+            Edit Habit
+          </h2>
+
+          <p className="mt-1 text-sm text-gray-500">
+            Update your habit details.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowEditHabit(false)}
+          className="text-xl text-gray-500 hover:text-white"
+        >
+          ×
+        </button>
+      </div>
+
+      <form onSubmit={handleEditHabit} className="space-y-4">
+        <input
+          type="text"
+          placeholder="Habit name"
+          value={editName}
+          onChange={(event) => setEditName(event.target.value)}
+          className="w-full rounded-xl border border-white/10 bg-[#101010] px-4 py-3 text-white outline-none placeholder:text-gray-600 focus:border-blue-500"
+        />
+
+        <input
+          type="text"
+          placeholder="Description"
+          value={editDescription}
+          onChange={(event) => setEditDescription(event.target.value)}
+          className="w-full rounded-xl border border-white/10 bg-[#101010] px-4 py-3 text-white outline-none placeholder:text-gray-600 focus:border-blue-500"
+        />
+
+        <div className="flex justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => setShowEditHabit(false)}
+            className="rounded-xl border border-white/10 px-4 py-2 text-sm text-gray-300 hover:bg-white/5"
+          >
+            Cancel
+          </button>
+
+          <button
+            type="submit"
+            className="rounded-xl bg-blue-600 px-5 py-2 text-sm font-medium text-white hover:bg-blue-500"
+          >
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+)}
+
         {message && (
           <p className="mb-6 text-sm text-gray-400">
             {message}
@@ -367,7 +444,6 @@ async function handleEditHabit(habit: Habit){
         )}
 
        
-        {/* Habit summary cards */}
         {/* Habit summary cards / Empty state */}
 {habits.length === 0 ? (
   <div className="mb-6 rounded-2xl border border-dashed border-white/10 bg-[#171717] p-10 text-center">
@@ -421,7 +497,11 @@ async function handleEditHabit(habit: Habit){
 
               <div className="flex gap-2">
                 <button
-                  onClick={() => handleEditHabit(selectedHabit)}
+                  onClick={() => {
+  setEditName(selectedHabit.name);
+  setEditDescription(selectedHabit.description ?? "");
+  setShowEditHabit(true);
+}}
                   className="rounded-lg border border-white/10 px-3 py-2 text-sm hover:bg-white/5"
                 >
                   Edit
