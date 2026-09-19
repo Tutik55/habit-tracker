@@ -40,11 +40,33 @@ app.post("/api/auth/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
 
+    if (name.trim().length < 2) {
+  return res.status(400).json({
+    message: "Name must be at least 2 characters long."
+  });
+}
+
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+if (!emailRegex.test(email)) {
+  return res.status(400).json({
+    message: "Please enter a valid email address."
+  });
+}
+
+if (password.length < 8) {
+  return res.status(400).json({
+    message: "Password must be at least 8 characters long."
+  });
+}
+
     if (!name || !email || !password) {
       return res.status(400).json({
         message: "Name, email and password are required."
       });
     }
+
+    
 
     const existingUser = await pool.query(
       "SELECT id FROM users WHERE email = $1",
@@ -154,17 +176,49 @@ app.post("/api/habits", authenticateToken, async (req, res) => {
     const userId = res.locals.userId;
     const { name, description } = req.body;
 
-    if (!name) {
-      return res.status(400).json({
-        message: "Habit name is required."
-      });
-    }
+    if (typeof name !== "string" || name.trim().length === 0) {
+  return res.status(400).json({
+    message: "Habit name is required."
+  });
+}
+
+if (name.trim().length < 2) {
+  return res.status(400).json({
+    message: "Habit name must be at least 2 characters long."
+  });
+}
+
+if (name.trim().length > 100) {
+  return res.status(400).json({
+    message: "Habit name cannot be longer than 100 characters."
+  });
+}
+
+if (
+  description !== undefined &&
+  description !== null &&
+  typeof description !== "string"
+) {
+  return res.status(400).json({
+    message: "Description must be text."
+  });
+}
+
+if (description && description.length > 500) {
+  return res.status(400).json({
+    message: "Description cannot be longer than 500 characters."
+  });
+}
 
     const result = await pool.query(
       `INSERT INTO habits (user_id, name, description)
        VALUES ($1, $2, $3)
        RETURNING id, user_id, name, description, archived, created_at`,
-      [userId, name, description || null]
+[
+  userId,
+  name.trim(),
+  description?.trim() || null
+]
     );
 
     return res.status(201).json(result.rows[0]);
@@ -191,6 +245,54 @@ app.patch("/api/habits/:id", authenticateToken, async (req, res) => {
       });
     }
 
+    if (name !== undefined) {
+  if (typeof name !== "string" || name.trim().length === 0) {
+    return res.status(400).json({
+      message: "Habit name cannot be empty."
+    });
+  }
+
+  if (name.trim().length < 2) {
+    return res.status(400).json({
+      message: "Habit name must be at least 2 characters long."
+    });
+  }
+
+  if (name.trim().length > 100) {
+    return res.status(400).json({
+      message: "Habit name cannot be longer than 100 characters."
+    });
+  }
+}
+
+if (
+  description !== undefined &&
+  description !== null &&
+  typeof description !== "string"
+) {
+  return res.status(400).json({
+    message: "Description must be text."
+  });
+}
+
+if (
+  typeof description === "string" &&
+  description.length > 500
+) {
+  return res.status(400).json({
+    message: "Description cannot be longer than 500 characters."
+  });
+}
+
+if (
+  archived !== undefined &&
+  typeof archived !== "boolean"
+) {
+  return res.status(400).json({
+    message: "Archived must be true or false."
+  });
+}
+
     const result = await pool.query(
       `UPDATE habits
        SET
@@ -199,7 +301,15 @@ app.patch("/api/habits/:id", authenticateToken, async (req, res) => {
          archived = COALESCE($3, archived)
        WHERE id = $4 AND user_id = $5
        RETURNING id, user_id, name, description, archived, created_at`,
-      [name, description, archived, habitId, userId]
+      [
+  typeof name === "string" ? name.trim() : name,
+  typeof description === "string"
+    ? description.trim()
+    : description,
+  archived,
+  habitId,
+  userId
+]
     );
 
     if (result.rows.length === 0) {
@@ -278,6 +388,14 @@ app.put("/api/habits/:id/schedule", authenticateToken, async (req, res) => {
       });
     }
 
+    const uniqueDays = new Set(days);
+
+if (uniqueDays.size !== days.length) {
+  return res.status(400).json({
+    message: "Schedule cannot contain duplicate days."
+  });
+}
+
     const habit = await pool.query(
       "SELECT id FROM habits WHERE id = $1 AND user_id = $2",
       [habitId, userId]
@@ -339,6 +457,44 @@ app.post("/api/habits/:id/completions", authenticateToken, async (req, res) => {
         message: "completedDate is required."
       });
     }
+
+    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+
+if (typeof completedDate !== "string" || !dateRegex.test(completedDate)) {
+  return res.status(400).json({
+    message: "completedDate must be in YYYY-MM-DD format."
+  });
+}
+
+const parsedDate = new Date(`${completedDate}T00:00:00Z`);
+
+if (Number.isNaN(parsedDate.getTime())) {
+  return res.status(400).json({
+    message: "Invalid completion date."
+  });
+}
+
+if (parsedDate.toISOString().slice(0, 10) !== completedDate) {
+  return res.status(400).json({
+    message: "Invalid completion date."
+  });
+}
+
+const now = new Date();
+
+const today = new Date(
+  Date.UTC(
+    now.getUTCFullYear(),
+    now.getUTCMonth(),
+    now.getUTCDate()
+  )
+);
+
+if (parsedDate > today) {
+  return res.status(400).json({
+    message: "Completion date cannot be in the future."
+  });
+}
 
     const habit = await pool.query(
       "SELECT id FROM habits WHERE id = $1 AND user_id = $2",
