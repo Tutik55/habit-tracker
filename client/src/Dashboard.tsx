@@ -239,11 +239,11 @@ async function handleEditHabit(event: React.FormEvent) {
 }
 
      return (
-  <div className="min-h-screen bg-[#0f0f0f] text-white">
+  <div className="min-h-screen overflow-x-hidden bg-[#0f0f0f] text-white">
     <div className="flex min-h-screen">
 
       {/* Sidebar */}
-      <aside className="hidden w-20 border-r border-white/10 bg-[#121212] md:flex md:flex-col md:items-center md:py-6">
+      <aside className="flex w-14 shrink-0 flex-col items-center border-r border-white/10 bg-[#121212] py-4 sm:w-16 lg:w-20 lg:py-6">
         <div className="mb-10 text-xl font-bold text-blue-500">
           H
         </div>
@@ -272,10 +272,10 @@ async function handleEditHabit(event: React.FormEvent) {
       </aside>
 
       {/* Main */}
-      <main className="flex-1 px-6 py-8 lg:px-10">
+      <main className="min-w-0 flex-1 px-3 py-6 sm:px-6 sm:py-8 lg:px-10">
 
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="text-2xl font-semibold">
               Zdravo 👋
@@ -286,7 +286,7 @@ async function handleEditHabit(event: React.FormEvent) {
             </p>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <div className="rounded-full border border-blue-500/30 bg-blue-500/10 px-4 py-2 text-sm text-blue-400">
               🔥 Keep going
             </div>
