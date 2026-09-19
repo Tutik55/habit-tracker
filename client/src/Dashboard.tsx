@@ -37,6 +37,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [editName, setEditName] = useState("");
   const [editDescription, setEditDescription] = useState("");
 
+  const [activeSection, setActiveSection] = useState<
+  "dashboard" | "history" | "stats" | "habits" | "settings"
+>("dashboard");
+
 const selectedHabit =
   habits.find((habit) => habit.id === selectedHabitId) ??
   habits[0] ??
@@ -238,6 +242,13 @@ async function handleEditHabit(event: React.FormEvent) {
   }
 }
 
+const storedUser = localStorage.getItem("user");
+
+const currentUser = storedUser
+  ? JSON.parse(storedUser)
+  : null;
+
+
      return (
   <div className="min-h-screen overflow-x-hidden bg-[#0f0f0f] text-white">
     <div className="flex min-h-screen">
@@ -249,25 +260,60 @@ async function handleEditHabit(event: React.FormEvent) {
         </div>
 
         <div className="flex flex-1 flex-col gap-6 text-xl text-gray-500">
-          <button className="rounded-xl bg-blue-600/20 p-3 text-blue-400">
-            ◫
-          </button>
+          <button
+  onClick={() => setActiveSection("dashboard")}
+  className={`rounded-xl p-3 ${
+    activeSection === "dashboard"
+      ? "bg-blue-600/20 text-blue-400"
+      : "text-gray-500 hover:text-white"
+  }`}
+>
+  ◫
+</button>
 
-          <button className="p-3 hover:text-white">
-            ◷
-          </button>
+          <button
+  onClick={() => setActiveSection("history")}
+  className={`rounded-xl p-3 ${
+    activeSection === "history"
+      ? "bg-blue-600/20 text-blue-400"
+      : "text-gray-500 hover:text-white"
+  }`}
+>
+  ◷
+</button>
 
-          <button className="p-3 hover:text-white">
-            ▥
-          </button>
+          <button
+  onClick={() => setActiveSection("stats")}
+  className={`rounded-xl p-3 ${
+    activeSection === "stats"
+      ? "bg-blue-600/20 text-blue-400"
+      : "text-gray-500 hover:text-white"
+  }`}
+>
+  ▥
+</button>
 
-          <button className="p-3 hover:text-white">
-            ☰
-          </button>
+          <button
+  onClick={() => setActiveSection("habits")}
+  className={`rounded-xl p-3 ${
+    activeSection === "habits"
+      ? "bg-blue-600/20 text-blue-400"
+      : "text-gray-500 hover:text-white"
+  }`}
+>
+  ☰
+</button>
 
-          <button className="p-3 hover:text-white">
-            ⚙
-          </button>
+         <button
+  onClick={() => setActiveSection("settings")}
+  className={`rounded-xl p-3 ${
+    activeSection === "settings"
+      ? "bg-blue-600/20 text-blue-400"
+      : "text-gray-500 hover:text-white"
+  }`}
+>
+  ⚙
+</button>
         </div>
       </aside>
 
@@ -443,7 +489,10 @@ async function handleEditHabit(event: React.FormEvent) {
           </p>
         )}
 
-       
+        
+        {activeSection === "dashboard" && (
+  <>
+
         {/* Habit summary cards / Empty state */}
 {habits.length === 0 ? (
   <div className="mb-6 rounded-2xl border border-dashed border-white/10 bg-[#171717] p-10 text-center">
@@ -547,6 +596,232 @@ async function handleEditHabit(event: React.FormEvent) {
             </div>
           </section>
         )}
+          
+ </>
+)}
+
+{activeSection === "history" && (
+  <div>
+    <div className="mb-6">
+      <h2 className="text-2xl font-semibold text-white">
+        History
+      </h2>
+
+      <p className="mt-1 text-sm text-gray-500">
+        Recent completion history across all habits.
+      </p>
+    </div>
+
+    {habits.length === 0 ? (
+      <div className="rounded-2xl border border-dashed border-white/10 bg-[#171717] p-10 text-center">
+        <p className="text-gray-400">
+          No history yet.
+        </p>
+
+        <p className="mt-2 text-sm text-gray-500">
+          Complete a habit to start building your history.
+        </p>
+      </div>
+    ) : (
+      <div className="space-y-4">
+        {habits.map((habit) => (
+          <div
+            key={habit.id}
+            className="rounded-2xl border border-white/10 bg-[#171717] p-6"
+          >
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-white">
+                  {habit.name}
+                </h3>
+
+                <p className="mt-1 text-sm text-gray-500">
+                  {habit.description || "No description"}
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setSelectedHabitId(habit.id);
+                  setActiveSection("dashboard");
+                }}
+                className="text-sm text-blue-400 hover:text-blue-300"
+              >
+                Open →
+              </button>
+            </div>
+
+            <HabitHistory
+              habitId={habit.id}
+              refreshKey={refreshKey}
+            />
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+)}
+
+{activeSection === "stats" && (
+  <div>
+    <div className="mb-6">
+      <h2 className="text-2xl font-semibold text-white">
+        Statistics
+      </h2>
+
+      <p className="mt-1 text-sm text-gray-500">
+        Compare your progress across all habits.
+      </p>
+    </div>
+
+    {habits.length === 0 ? (
+      <div className="rounded-2xl border border-dashed border-white/10 bg-[#171717] p-10 text-center">
+        <p className="text-gray-400">
+          No statistics yet.
+        </p>
+
+        <p className="mt-2 text-sm text-gray-500">
+          Create a habit to start tracking your progress.
+        </p>
+      </div>
+    ) : (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {habits.map((habit) => (
+          <HabitSummaryCard
+            key={habit.id}
+            habitId={habit.id}
+            name={habit.name}
+            selected={selectedHabit?.id === habit.id}
+            refreshKey={refreshKey}
+            onClick={() => {
+              setSelectedHabitId(habit.id);
+              setActiveSection("dashboard");
+            }}
+          />
+        ))}
+      </div>
+    )}
+  </div>
+)}
+
+{activeSection === "habits" && (
+  <div>
+    <div className="mb-6">
+      <h2 className="text-2xl font-semibold text-white">
+        All Habits
+      </h2>
+
+      <p className="mt-1 text-sm text-gray-500">
+        View and manage all your habits.
+      </p>
+    </div>
+
+    {habits.length === 0 ? (
+      <div className="rounded-2xl border border-dashed border-white/10 bg-[#171717] p-10 text-center">
+        <p className="text-gray-400">
+          You don't have any habits yet.
+        </p>
+
+        <button
+          onClick={() => setShowCreateHabit(true)}
+          className="mt-4 rounded-xl bg-blue-600 px-4 py-2 text-sm font-medium hover:bg-blue-500"
+        >
+          + Create Habit
+        </button>
+      </div>
+    ) : (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {habits.map((habit) => (
+          <button
+            key={habit.id}
+            onClick={() => {
+              setSelectedHabitId(habit.id);
+              setActiveSection("dashboard");
+            }}
+            className="rounded-2xl border border-white/10 bg-[#171717] p-5 text-left transition hover:border-blue-500/50 hover:bg-[#1b1b1b]"
+          >
+            <h3 className="font-semibold text-white">
+              {habit.name}
+            </h3>
+
+            <p className="mt-2 text-sm text-gray-500">
+              {habit.description || "No description"}
+            </p>
+
+            <div className="mt-4 text-xs text-blue-400">
+              Open habit →
+            </div>
+          </button>
+        ))}
+      </div>
+    )}
+  </div>
+)}
+
+{activeSection === "settings" && (
+  <div>
+    <div className="mb-6">
+      <h2 className="text-2xl font-semibold text-white">
+        Settings
+      </h2>
+
+      <p className="mt-1 text-sm text-gray-500">
+        Manage your account and session.
+      </p>
+    </div>
+
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-white/10 bg-[#171717] p-6">
+        <h3 className="font-semibold text-white">
+          Account
+        </h3>
+
+        <div className="mt-5 space-y-4">
+          <div>
+            <p className="text-xs text-gray-500">
+              Name
+            </p>
+
+            <p className="mt-1 text-sm text-gray-200">
+              {currentUser?.name ?? "Unknown"}
+            </p>
+          </div>
+
+          <div>
+            <p className="text-xs text-gray-500">
+              Email
+            </p>
+
+            <p className="mt-1 text-sm text-gray-200">
+              {currentUser?.email ?? "Unknown"}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="rounded-2xl border border-white/10 bg-[#171717] p-6">
+        <h3 className="font-semibold text-white">
+          Session
+        </h3>
+
+        <p className="mt-2 text-sm text-gray-500">
+          Sign out from your current session.
+        </p>
+
+        <button
+          onClick={() => {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            onLogout();
+          }}
+          className="mt-5 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-2 text-sm text-red-400 transition hover:bg-red-500/10"
+        >
+          Logout
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       </main>
     </div>
   </div>

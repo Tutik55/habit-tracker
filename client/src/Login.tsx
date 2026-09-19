@@ -45,6 +45,8 @@ export default function Login({
 
       localStorage.setItem("token", data.token);
 
+      localStorage.setItem("user", JSON.stringify(data.user));
+
       onLogin();
     } catch (error) {
       console.error(error);
@@ -53,6 +55,11 @@ export default function Login({
       setLoading(false);
     }
   }
+
+
+const storedUser = localStorage.getItem("user");
+
+
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-[#0f0f0f] px-4 text-white">
