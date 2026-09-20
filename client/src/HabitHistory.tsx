@@ -1,3 +1,4 @@
+import { API_URL } from "./config";
 import { useEffect, useState } from "react";
 
 type HabitHistoryProps = {
@@ -29,7 +30,7 @@ export default function HabitHistory({
 
       try {
         const response = await fetch(
-          `http://localhost:3000/api/habits/${habitId}/completions`,
+  `${API_URL}/api/habits/${habitId}/completions`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

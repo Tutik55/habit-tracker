@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { API_URL } from "./config";
+
 
 type RegisterProps = {
   onGoToLogin: () => void;
@@ -23,8 +25,7 @@ export default function Register({ onGoToLogin }: RegisterProps) {
 
     try {
       const response = await fetch(
-        "http://localhost:3000/api/auth/register",
-        {
+  `${API_URL}/api/auth/register`,{
           method: "POST",
           headers: {
             "Content-Type": "application/json",

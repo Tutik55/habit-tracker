@@ -1,3 +1,4 @@
+import { API_URL } from "./config";
 import { useEffect, useState } from "react";
 
 type HabitSummaryCardProps = {
@@ -32,7 +33,7 @@ export default function HabitSummaryCard({
       }
 
       const response = await fetch(
-        `http://localhost:3000/api/habits/${habitId}/stats`,
+  `${API_URL}/api/habits/${habitId}/stats`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

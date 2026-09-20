@@ -1,3 +1,4 @@
+import { API_URL } from "./config";
 import { useEffect, useState } from "react";
 
 type HabitCalendarProps = {
@@ -39,7 +40,7 @@ export default function HabitCalendar({
       try {
         const [scheduleResponse, completionsResponse] = await Promise.all([
           fetch(
-            `http://localhost:3000/api/habits/${habitId}/schedule`,
+  `${API_URL}/api/habits/${habitId}/schedule`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -48,7 +49,7 @@ export default function HabitCalendar({
           ),
 
           fetch(
-            `http://localhost:3000/api/habits/${habitId}/completions`,
+  `${API_URL}/api/habits/${habitId}/completions`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,

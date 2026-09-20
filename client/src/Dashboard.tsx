@@ -1,3 +1,5 @@
+import { API_URL } from "./config";
+
 import { useEffect, useState } from "react";
 import HabitSchedule from "./HabitSchedule";
 import HabitCompletion from "./HabitCompletion";
@@ -55,7 +57,7 @@ const selectedHabit =
       }
 
       try {
-        const response = await fetch("http://localhost:3000/api/habits", {
+        const response = await fetch(`${API_URL}/api/habits`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -95,7 +97,7 @@ setMessage("");
     }
 
     try {
-      const response = await fetch("http://localhost:3000/api/habits", {
+      const response = await fetch(`${API_URL}/api/habits`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -150,7 +152,7 @@ setMessage("");
     }
 
     try {
-      const response = await fetch(`http://localhost:3000/api/habits/${habitId}`, {
+      const response = await fetch(`${API_URL}/api/habits/${habitId}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -200,8 +202,7 @@ async function handleEditHabit(event: React.FormEvent) {
   }
 
   try {
-    const response = await fetch(
-      `http://localhost:3000/api/habits/${selectedHabit.id}`,
+    const response = await fetch(`${API_URL}/api/habits/${selectedHabit.id}`,
       {
         method: "PATCH",
         headers: {

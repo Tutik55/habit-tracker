@@ -1,3 +1,5 @@
+import { API_URL } from "./config";
+
 import { useEffect, useState } from "react";
 
 type HabitCompletionProps = {
@@ -32,8 +34,7 @@ export default function HabitCompletion({
         return;
       }
 
-      const response = await fetch(
-        `http://localhost:3000/api/habits/${habitId}/completions`,
+      const response = await fetch(`${API_URL}/api/habits/${habitId}/completions`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -73,8 +74,8 @@ export default function HabitCompletion({
     }
 
     const url = completed
-      ? `http://localhost:3000/api/habits/${habitId}/completions/${today}`
-      : `http://localhost:3000/api/habits/${habitId}/completions`;
+      ? `${API_URL}/api/habits/${habitId}/completions/${today}`
+      : `${API_URL}/api/habits/${habitId}/completions`;
 
     const response = await fetch(url, {
       method: completed ? "DELETE" : "POST",

@@ -1,3 +1,5 @@
+import { API_URL } from "./config";
+
 import { useEffect, useState } from "react";
 
 type HabitScheduleProps = {
@@ -30,7 +32,7 @@ export default function HabitSchedule({
       }
 
       const response = await fetch(
-        `http://localhost:3000/api/habits/${habitId}/schedule`,
+  `${API_URL}/api/habits/${habitId}/schedule`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -74,7 +76,7 @@ export default function HabitSchedule({
     }
 
     const response = await fetch(
-      `http://localhost:3000/api/habits/${habitId}/schedule`,
+  `${API_URL}/api/habits/${habitId}/schedule`,
       {
         method: "PUT",
         headers: {
