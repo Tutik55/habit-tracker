@@ -44,10 +44,11 @@ export default function Login({
       }
 
       localStorage.setItem("token", data.token);
+localStorage.setItem("user", JSON.stringify(data.user));
 
-      localStorage.setItem("user", JSON.stringify(data.user));
+onLogin();
 
-      onLogin();
+      
     } catch (error) {
       console.error(error);
       setMessage("Could not connect to server.");
@@ -56,8 +57,6 @@ export default function Login({
     }
   }
 
-
-const storedUser = localStorage.getItem("user");
 
 
 
